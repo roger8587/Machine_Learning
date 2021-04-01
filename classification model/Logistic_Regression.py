@@ -22,13 +22,20 @@ class activater():
 
 class LogisticRegression():    
     np.random.seed(0)
-    def __init__(self, learning_rate, iterations, multi_class = True):
+    def __init__(self, learning_rate, iterations, multi_class = True, fit_intercept=True):
         self.learning_rate = learning_rate 
         self.iterations = iterations
         self.activater_fun = activater().is_multi_class(multi_class)
         self.multi_class = multi_class
-        
+        self.fit_intercept = fit_intercept
+    
+    def add_intercept(self, X):
+        intercept = np.ones((X.shape[0], 1))
+        return np.concatenate((intercept, X), axis=1)
+    
     def fit(self, X, t):
+        if self.fit_intercept:
+            X = self.add_intercept(X)
         self.X = X
         self.t = t
         self.classes = t.shape[1] if self.multi_class else 1
@@ -37,7 +44,6 @@ class LogisticRegression():
             self.w = np.random.randn(self.classes,self.n)
         else:
             self.w = np.random.randn(self.n)
-        self.b = np.random.randn(self.classes)
         for i in range(self.iterations):
             error = self.cross_entropy(self.X, self.t)
             if (i+1) % 10 == 0:
@@ -47,15 +53,14 @@ class LogisticRegression():
     def update_weights( self ) : #gradient decent
         scale = self.activater_fun(self.y(self.X))-self.t
         dw = scale.T.dot(self.X)/self.m
-        db = np.mean(scale,0)
         self.w -= self.learning_rate * dw 
-        self.b -= self.learning_rate * db
     
     def y(self, X):
         if self.multi_class:
-            return self.w.dot(X.T).T + self.b
+            return self.w.dot(X.T).T
         else:
-            return self.w.dot(X.T) + self.b
+            return self.w.dot(X.T)
+        
     def cross_entropy(self, X, t):
         s = self.activater_fun(self.y(X))
         if self.multi_class:
